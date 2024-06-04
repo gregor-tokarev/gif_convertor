@@ -1,3 +1,4 @@
 export const environment = {
-  apiUrl: 'http://localhost:3000',
+    production: true,
+    apiUrl: 'http://service:3000',
 } as const;

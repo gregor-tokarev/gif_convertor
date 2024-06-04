@@ -1,0 +1,24 @@
+<div class="space-y-8">
+  <div
+    class="border-2 border-dashed border-gray-400 p-4 rounded-xl min-h-[300px] flex items-center justify-center"
+    [class.border-sky-500]="mouseOver()"
+    [class.border-red-500]="formatError()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <p *ngIf="!formatError() && !uploadState()" [class.text-sky-500]="mouseOver()" class="text-2xl text-gray-600">
+      Drag'n'drop a video to convert to a GIF
+    </p>
+    <p *ngIf="formatError() && !uploadState()" class="text-2xl text-red-500">Invalid video format</p>
+
+    <p *ngIf="uploadState() !== null" class="text-2xl text-gray-600">
+      Uploading... {{ uploadState() }}%
+    </p>
+  </div>
+  <div class="flex flex-col space-y-2">
+    <div *ngFor="let job of uploads()">
+      <app-convert-card [loading]="!job.finishConverting" [url]="job.gifPath"></app-convert-card>
+    </div>
+  </div>
+</div>

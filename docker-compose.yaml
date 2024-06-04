@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+    minio:
+        image: minio/minio
+        container_name: minio
+        restart: always
+        ports:
+            - "9000:9000"
+            - "9090:9090"
+        volumes:
+            - storage:/data
+        environment:
+            - MINIO_ACCESS_KEY=minio
+            - MINIO_SECRET_KEY=minio123
+        command: server /data --console-address ":9090"
+    redis:
+        image: redis:6.2.6
+        container_name: redis
+        restart: always
+        ports:
+            - "6379:6379"
+        command: redis-server --appendonly yes  --requirepass redis
+
+volumes:
+    storage:
+        driver: local
