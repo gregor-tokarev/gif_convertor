@@ -1,11 +1,12 @@
 {
+    "extends": "../../packages/typescript-config/base.json",
     "compilerOptions": {
         "target": "ES6",
         "module": "commonjs",
-        "strict": true,
+        "strict": false,
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "outDir": "./dist"
+        "outFile": "./dist/main.js"
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules"]

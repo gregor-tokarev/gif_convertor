@@ -1,11 +1,14 @@
 import express, { Request, Response } from "express";
 import multer, { Multer } from "multer";
-import fs from "fs";
 import cors from "cors";
 import { Queue } from "bullmq";
 import * as Minio from "minio";
 import * as path from "path";
 import { ConvertJob, MAIN_BUCKET_NAME, QUEUE_CONVERT } from "contracts";
+import { multerMinioStorage } from "multer-minio";
+import { config } from "dotenv";
+
+config({ path: ".local.env" });
 
 // Create an instance of the Express application
 const app = express();
@@ -14,33 +17,24 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 
 const queue = new Queue<ConvertJob>(QUEUE_CONVERT, {
-    connection: { host: "localhost", port: 6379, password: "redis" },
-});
-
-// Set up Multer for file uploads
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-        cb(null, "uploads/");
-    },
-    filename: (_req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
+    connection: {
+        host: process.env.REDIS_HOST ?? "",
+        port: Number(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
     },
 });
 
 const minio = new Minio.Client({
-    endPoint: "localhost",
-    port: 9000,
-    accessKey: "minio",
-    secretKey: "minio123",
-    useSSL: false,
+    endPoint: process.env.MINIO_ENDPOINT ?? "",
+    accessKey: process.env.MINIO_ACCESS_KEY ?? "",
+    port: Number(process.env.MINIO_PORT),
+    secretKey: process.env.MINIO_SECRET_KEY ?? "",
+    useSSL: process.env.MINIO_USE_SSL === "true",
 });
 
-const upload: Multer = multer({ storage });
+const storage = multerMinioStorage({ minio, bucketName: MAIN_BUCKET_NAME });
 
-// Ensure the uploads directory exists
-if (!fs.existsSync("uploads")) {
-    fs.mkdirSync("uploads");
-}
+const upload: Multer = multer({ storage });
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());
@@ -53,29 +47,28 @@ app.post("/convert", upload.single("video"), async (req: Request, res: Response)
         return res.status(400).send("No video file uploaded.");
     }
 
-    await minio.fPutObject(MAIN_BUCKET_NAME, path.basename(inputFilePath), inputFilePath);
-
     const job = await queue.add("convert", { filePath: path.basename(inputFilePath) });
 
     res.status(200).json(job);
 });
 
 app.get("/status", async (req: Request, res: Response) => {
-    const jobId = req.query["jobId"]?.toString();
-    if (!jobId) {
+    const jobIds = req.query["jobId"]?.toString();
+    if (!jobIds) {
         return res.status(400).send("No job ID provided");
     }
+    const ids = jobIds.split(",");
 
-    const job = await queue.getJob(jobId);
-    if (!job) {
-        return res.status(404).send("Job not found");
+    const jobs = await Promise.all(ids.map((id) => queue.getJob(id)));
+    if (!jobs.length) {
+        return res.status(404).send("Jobs not found");
     }
 
-    res.status(200).send(job);
+    res.status(200).send(jobs);
 });
 
 // Start the server
 minio
-    .bucketExists("uploads")
-    .then((res) => (res ? Promise.resolve() : minio.makeBucket("uploads")))
+    .bucketExists(MAIN_BUCKET_NAME)
+    .then((res) => (res ? Promise.resolve() : minio.makeBucket(MAIN_BUCKET_NAME)))
     .then(() => app.listen(port));

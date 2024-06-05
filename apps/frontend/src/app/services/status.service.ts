@@ -10,7 +10,7 @@ import { ConvertJob } from 'contracts';
 export class StatusService {
     http = inject(HttpClient);
 
-    getJobStatus(jobId: string) {
-        return this.http.get<Job<ConvertJob>>(environment.apiUrl + `/status?jobId=${jobId}`);
+    getJobsStatus(jobsId: string[]) {
+        return this.http.get<Job<ConvertJob>[]>(environment.apiUrl + `/status?jobId=${jobsId.join(',')}`);
     }
 }

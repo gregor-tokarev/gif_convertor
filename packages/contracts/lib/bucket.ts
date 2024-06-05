@@ -1,1 +1,1 @@
-export const MAIN_BUCKET_NAME = "upload";
+export const MAIN_BUCKET_NAME = "uploads";

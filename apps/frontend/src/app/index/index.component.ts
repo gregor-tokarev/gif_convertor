@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConvertService } from '../services/convert.service';
 import { StatusService } from '../services/status.service';
@@ -6,6 +6,7 @@ import { SkeletonLoaderComponent } from '../shared/skeleton-loader/skeleton-load
 import { Job } from 'bullmq';
 import { ConvertJob } from 'contracts';
 import { ConvertCardComponent } from '../shared/convert-card/convert-card.component';
+import { concatMap, filter, interval, map } from 'rxjs';
 
 @Component({
     selector: 'app-index',
@@ -13,7 +14,7 @@ import { ConvertCardComponent } from '../shared/convert-card/convert-card.compon
     imports: [CommonModule, SkeletonLoaderComponent, ConvertCardComponent],
     templateUrl: './index.component.html',
 })
-export class IndexComponent {
+export class IndexComponent implements OnInit {
     convertService = inject(ConvertService);
     statusService = inject(StatusService);
 
@@ -23,21 +24,37 @@ export class IndexComponent {
     uploadState = signal<number | null>(null);
     uploads = signal<({ finishConverting: boolean; jobId: string } & ConvertJob)[]>([]);
 
-    constructor() {
-        effect(() => {
-            // if (!this.fileUploaded()) return;
-            //
-            // setInterval(() => {
-            //     const job = this.job();
-            //     if (!job) return;
-            //     this.statusService.getJobStatus(job['id']).subscribe({
-            //         next: (event) => {
-            //             this.finalGif.set(event.data.gifPath ?? null);
-            //         },
-            //     });
-            // }, 2000);
-        });
+    pendingUploads = computed(() => this.uploads().filter((upload) => !upload.finishConverting));
+
+    ngOnInit() {
+        interval(1000)
+            .pipe(
+                filter(() => this.pendingUploads().length > 0),
+                concatMap(() => this.statusService.getJobsStatus(this.pendingUploads().map((i) => i.jobId))),
+            )
+            .subscribe((jobs) => {
+                jobs.forEach((job) => {
+                    if (job.data.gifPath && job.finishedOn) {
+                        const tempUploads = this.uploads();
+                        const index = tempUploads.findIndex((i) => i.jobId === job.id);
+
+                        if (index !== -1) {
+                            tempUploads.splice(index, 1, {
+                                ...tempUploads[index],
+                                finishConverting: true,
+                                gifPath: job.data.gifPath,
+                            });
+                            this.uploads.set(tempUploads);
+                        }
+                    }
+                });
+            });
     }
+
+    onDelete(jobId: string) {
+        this.uploads.set(this.uploads().filter((i) => i.jobId !== jobId));
+    }
+
     onDragOver(event: DragEvent) {
         event.preventDefault();
         event.stopPropagation();
@@ -68,13 +85,11 @@ export class IndexComponent {
 
         this.convertService.convert(file).subscribe({
             next: (event) => {
-                console.log(event);
                 if (typeof event === 'number') {
                     this.uploadState.set(event);
                 } else {
                     this.uploadState.set(null);
 
-                    console.log(event);
                     this.uploads.set([
                         ...this.uploads(),
                         { finishConverting: false, jobId: event.id, filePath: event.data.filePath },

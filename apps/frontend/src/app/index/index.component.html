@@ -18,7 +18,7 @@
   </div>
   <div class="flex flex-col space-y-2">
     <div *ngFor="let job of uploads()">
-      <app-convert-card [loading]="!job.finishConverting" [url]="job.gifPath"></app-convert-card>
+      <app-convert-card [loading]="!job.finishConverting" [url]="job.gifPath" (delete)="onDelete(job.jobId)"></app-convert-card>
     </div>
   </div>
 </div>

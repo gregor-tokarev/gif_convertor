@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SkeletonLoaderComponent } from '../skeleton-loader/skeleton-loader.component';
 
@@ -12,7 +12,17 @@ export class ConvertCardComponent {
     @Input() loading: boolean = true;
     @Input() url?: string;
 
-    @Output() download = new EventEmitter<void>();
-    @Output() copy = new EventEmitter<void>();
     @Output() delete = new EventEmitter<void>();
+
+    coping = signal(false);
+
+    async onCopy() {
+        await navigator.clipboard.writeText('http://localhost:9000/uploads/' + this.url);
+
+        this.coping.set(true);
+
+        setTimeout(() => {
+            this.coping.set(false);
+        }, 1000);
+    }
 }

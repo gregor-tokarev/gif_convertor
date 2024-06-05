@@ -4,8 +4,7 @@
     "description": "A simple Express app to convert MP4 videos to GIFs",
     "main": "dist/main.js",
     "scripts": {
-        "start": "node dist/main.js",
-        "build": "tsc",
+        "start": "tsx src/main.ts",
         "dev": "ts-node src/main.ts"
     },
     "author": "Your Name",
@@ -18,6 +17,7 @@
     "devDependencies": {
         "@types/fluent-ffmpeg": "^2.1.24",
         "ts-node": "^10.9.1",
+        "@types/minio": "^7.1.1",
         "typescript": "^4.9.5"
     }
 }

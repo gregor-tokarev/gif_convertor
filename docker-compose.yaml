@@ -1,6 +1,53 @@
 version: "3.7"
 
 services:
+    spa:
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile-spa
+        container_name: spa
+        restart: always
+        ports:
+            - "80:80"
+    worker:
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile-worker
+        environment:
+            MINIO_ENDPOINT: minio
+            MINIO_ACCESS_KEY: minio
+            MINIO_PORT: 9000
+            MINIO_SECRET_KEY: minio123
+            MINIO_USE_SSL: "false"
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            REDIS_PASSWORD: redis
+        restart: always
+        deploy:
+            replicas: 5
+        depends_on:
+            - minio
+            - redis
+    service:
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile-service
+        container_name: service
+        environment:
+            MINIO_ENDPOINT: minio
+            MINIO_ACCESS_KEY: minio
+            MINIO_PORT: 9000
+            MINIO_SECRET_KEY: minio123
+            MINIO_USE_SSL: false
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            REDIS_PASSWORD: redis
+        restart: always
+        ports:
+            - "3000:3000"
+        depends_on:
+            - minio
+            - redis
     minio:
         image: minio/minio
         container_name: minio
@@ -9,7 +56,7 @@ services:
             - "9000:9000"
             - "9090:9090"
         volumes:
-            - storage:/data
+            - minio-data:/data
         environment:
             - MINIO_ACCESS_KEY=minio
             - MINIO_SECRET_KEY=minio123
@@ -23,5 +70,4 @@ services:
         command: redis-server --appendonly yes  --requirepass redis
 
 volumes:
-    storage:
-        driver: local
+    minio-data:

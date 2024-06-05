@@ -1,15 +1,13 @@
 <div class="border-b-2 p-4 flex items-start justify-between space-x-4">
   <div class="w-[300px] h-[200px]">
     <app-skeleton-loader *ngIf="loading" class="block w-full h-full"></app-skeleton-loader>
-    <img *ngIf="!loading" class="w-full h-full object-cover" [src]="url" alt="gif">
+    <img *ngIf="!loading" class="w-full h-full object-cover" [src]="'http://localhost:9000/uploads/' + url" alt="gif">
   </div>
-  <div class="grow space-y-1" *ngIf="!loading">
-    <button class="w-full" (click)="download.emit()">Download</button>
-    <button class="w-full" (click)="copy.emit()">Copy</button>
+  <div class="grow space-y-2" *ngIf="!loading">
+    <button class="w-full" (click)="onCopy()">{{ coping() ? 'Copied!' : 'Copy url' }}</button>
     <button class="w-full" (click)="delete.emit()">Delete</button>
   </div>
-  <div class="grow space-y-1" *ngIf="loading">
-    <app-skeleton-loader class="block w-full h-10"></app-skeleton-loader>
+  <div class="grow space-y-2" *ngIf="loading">
     <app-skeleton-loader class="block w-full h-10"></app-skeleton-loader>
     <app-skeleton-loader class="block w-full h-10"></app-skeleton-loader>
   </div>

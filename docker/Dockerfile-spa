@@ -1,0 +1,28 @@
+FROM node:18-alpine AS base
+# Install Turbo globally
+RUN npm i -g turbo
+
+
+# Prune the monorepo for the specific app
+WORKDIR /app
+COPY . .
+RUN turbo prune frontend --docker
+
+# Stage 1: Build the Angular application
+FROM node:18-alpine AS build
+WORKDIR /app
+COPY --from=base /app/out/json/ .
+RUN npm ci
+
+# Copy the rest of the application
+COPY --from=base /app/out/full .
+
+RUN npm run build
+
+
+# Stage 2: Serve the Angular application using Nginx
+FROM nginx:alpine
+COPY --from=build /app/apps/frontend/dist/frontend /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
