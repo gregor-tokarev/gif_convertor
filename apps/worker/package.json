@@ -5,7 +5,7 @@
     "main": "dist/main.js",
     "scripts": {
         "start": "tsx src/main.ts",
-        "dev": "ts-node src/main.ts"
+        "dev": "tsx watch src/main.ts"
     },
     "author": "Your Name",
     "license": "MIT",

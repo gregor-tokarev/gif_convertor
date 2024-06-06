@@ -7,6 +7,7 @@ import * as path from "path";
 import { ConvertJob, MAIN_BUCKET_NAME, QUEUE_CONVERT } from "contracts";
 import { multerMinioStorage } from "multer-minio";
 import { config } from "dotenv";
+import morgan from "morgan";
 
 config({ path: ".local.env" });
 
@@ -34,11 +35,12 @@ const minio = new Minio.Client({
 
 const storage = multerMinioStorage({ minio, bucketName: MAIN_BUCKET_NAME });
 
-const upload: Multer = multer({ storage });
+const upload: Multer = multer({
+    storage,
+});
 
 // Middleware to parse JSON and URL-encoded data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(morgan("tiny"));
 
 // Endpoint for converting MP4 to GIF
 app.post("/convert", upload.single("video"), async (req: Request, res: Response) => {
