@@ -4,8 +4,7 @@
   "description": "",
   "scripts": {},
   "private": true,
-  "dependencies": {
-    "artillery": "^2.0.14",
-    "form-data": "^4.0.0"
+  "devDependencies": {
+    "@types/k6": "^0.51.0"
   }
 }

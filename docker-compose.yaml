@@ -8,7 +8,7 @@ services:
         container_name: spa
         restart: always
         ports:
-            - "80:80"
+            - "4200:80"
     worker:
         build:
             context: .
